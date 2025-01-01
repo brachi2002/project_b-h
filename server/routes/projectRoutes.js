@@ -7,6 +7,7 @@ router.post('/projects', createProject);
 router.get('/projects', getProjects);
 router.get('/projects/:id', getProjectById);
 
+
 router.get('/projects/images/:keyword', async (req, res) => {
     const { keyword } = req.params;
 
