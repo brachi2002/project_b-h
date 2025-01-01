@@ -8,7 +8,7 @@ const app = express();
 
 app.use(bodyParser.json());
 app.use(cors());
-app.use(express.static(path.join(__dirname, '../client'))); // אם הקבצים הועברו לתיקיית client
+app.use(express.static(path.join(__dirname, '../client')));
 
 app.use('/api', projectRoutes);
 

@@ -1,20 +1,26 @@
 {
-  "projects": [
-    {
-      "id": "VSCKD5RBA0B",
-      "name": "Test Project",
-      "summary": "This is a test project.",
-      "manager": "test@example.com",
-      "team": [
-        {
-          "name": "Alice",
-          "email": "alice@example.com",
-          "role": "Developer"
-        }
-      ],
-      "startDate": "2025-01-01T10:00:00Z",
+  "AAA1234567890": {
+      "name": "Project A",
+      "summary": "This is project A summary.",
       "images": [],
-      "goals": []
-    }
-  ]
+      "manager": {
+          "name": "Alice Manager",
+          "email": "alice.manager@example.com"
+      },
+      "team": [],
+      "start_date": "2025-01-01T00:00:00Z",
+      "id": "AAA1234567890"
+  },
+  "BBB1234567890": {
+      "name": "Project B",
+      "summary": "This is project B summary.",
+      "images": [],
+      "manager": {
+          "name": "Bob Manager",
+          "email": "bob.manager@example.com"
+      },
+      "team": [],
+      "start_date": "2025-01-02T00:00:00Z",
+      "id": "BBB1234567890"
+  }
 }
