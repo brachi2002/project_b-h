@@ -1,6 +1,46 @@
 $(document).ready(function () {
     const apiUrl = "/api";
 
+    // טוען את כל הפרויקטים
+    function loadProjects() {
+        $.ajax({
+            url: `${apiUrl}/projects`,
+            method: "GET",
+            success: function (projects) {
+                console.log("Projects loaded:", projects);
+                const projectHtml = Object.values(projects).map(project => `
+                    <div class="list-group-item">
+                        <h5>${project.name}</h5>
+                        <p>${project.summary}</p>
+                        <p><strong>Manager:</strong> ${project.manager.name} (<a href="mailto:${project.manager.email}">${project.manager.email}</a>)</p>
+                        <p><strong>Start Date:</strong> ${new Date(project.start_date).toLocaleString()}</p>
+                    </div>
+                `).join('');
+                $("#projectList").html(projectHtml);
+            },
+            error: function () {
+                alert("Failed to load projects.");
+            },
+        });
+    }
+
+    // הוספת שדות למשתתפים
+    $("#addTeamMember").click(function () {
+        $("#teamMembers").append(`
+            <div class="team-member mb-3">
+                <input type="text" class="form-control mb-2 team-name" placeholder="Name" required>
+                <input type="email" class="form-control mb-2 team-email" placeholder="Email" required>
+                <input type="text" class="form-control mb-2 team-role" placeholder="Role" required>
+                <button type="button" class="btn btn-danger removeTeamMember">Remove</button>
+            </div>
+        `);
+    });
+
+    // הסרת משתתף
+    $(document).on("click", ".removeTeamMember", function () {
+        $(this).closest(".team-member").remove();
+    });
+
     // חיפוש תמונות ב-Unsplash
     $("#searchImages").click(function () {
         const keyword = $("#imageKeyword").val();
@@ -19,7 +59,13 @@ $(document).ready(function () {
                         <img src="${image.thumb}" class="card-img-top" alt="${image.description}">
                         <div class="card-body">
                             <p class="card-text">${image.description || "No description"}</p>
-                            <button class="btn btn-primary selectImage" data-id="${image.id}" data-thumb="${image.thumb}" data-description="${image.description || ""}" data-keyword="${keyword}">Select</button>
+                            <button class="btn btn-primary selectImage" 
+                                data-id="${image.id}" 
+                                data-thumb="${image.thumb}" 
+                                data-description="${image.description || ""}" 
+                                data-keyword="${keyword}">
+                                Select
+                            </button>
                         </div>
                     </div>
                 `).join('');
@@ -60,6 +106,15 @@ $(document).ready(function () {
     $("#projectForm").submit(function (e) {
         e.preventDefault();
 
+        // איסוף משתתפים
+        const team = $(".team-member").map(function () {
+            const name = $(this).find(".team-name").val();
+            const email = $(this).find(".team-email").val();
+            const role = $(this).find(".team-role").val();
+            return { name, email, role };
+        }).get();
+
+        // איסוף תמונות
         const images = $("#selectedImages .card").map(function () {
             return {
                 id: $(this).find("button").data("id"),
@@ -69,6 +124,7 @@ $(document).ready(function () {
             };
         }).get();
 
+        // יצירת האובייקט של הפרויקט
         const newProject = {
             name: $("#name").val(),
             summary: $("#summary").val(),
@@ -76,11 +132,14 @@ $(document).ready(function () {
                 name: $("#managerName").val(),
                 email: $("#managerEmail").val(),
             },
-            team: [],
+            team,
             images,
             start_date: $("#startDate").val(),
         };
 
+        console.log("Submitting project:", newProject);
+
+        // שליחת הפרויקט לשרת
         $.ajax({
             url: `${apiUrl}/projects`,
             method: "POST",
