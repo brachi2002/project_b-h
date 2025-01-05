@@ -54,8 +54,73 @@ const getProjectById = (req, res) => {
     res.status(200).json(data[id]);
 };
 
+const updateProject = (req, res) => {
+    const { id } = req.params;
+    const updates = req.body;
+
+    const data = readData();
+    if (!data[id]) {
+        return res.status(404).json({ error: 'Project not found' });
+    }
+
+    const project = data[id];
+    Object.assign(project, updates); // מעדכן את השדות שנשלחו
+    writeData(data);
+
+    res.status(200).json({ message: 'Project updated successfully', project });
+};
+
+const deleteProject = (req, res) => {
+    const { id } = req.params;
+
+    const data = readData();
+    if (!data[id]) {
+        return res.status(404).json({ error: 'Project not found' });
+    }
+
+    delete data[id];
+    writeData(data);
+
+    res.status(200).json({ message: 'Project deleted successfully' });
+};
+
+const deleteImageFromProject = (req, res) => {
+    const { id, imageId } = req.params;
+
+    const data = readData();
+    if (!data[id]) {
+        return res.status(404).json({ error: 'Project not found' });
+    }
+
+    const project = data[id];
+    project.images = project.images.filter(image => image.id !== imageId);
+    writeData(data);
+
+    res.status(200).json({ message: 'Image removed successfully', images: project.images });
+};
+
+const deleteTeamMember = (req, res) => {
+    const { id, email } = req.params;
+
+    const data = readData();
+    if (!data[id]) {
+        return res.status(404).json({ error: 'Project not found' });
+    }
+
+    const project = data[id];
+    project.team = project.team.filter(member => member.email !== email);
+    writeData(data);
+
+    res.status(200).json({ message: 'Team member removed successfully', team: project.team });
+};
+
+
 module.exports = {
     createProject,
     getProjects,
-    getProjectById
+    getProjectById,
+    updateProject,
+    deleteProject,
+    deleteImageFromProject,
+    deleteTeamMember
 };
