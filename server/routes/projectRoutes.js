@@ -5,45 +5,42 @@ const {
     getProjectById,
     updateProject,
     deleteProject,
-    deleteImageFromProject,
-    deleteTeamMember
-} = require('../controllers/projectController'); // ייבוא כל הפונקציות
+    addImageToProject,
+    deleteImageFromProject
+} = require('../controllers/projectController');
 const { searchImages } = require('../services/unsplashService');
 
 const router = express.Router();
 
-// ניתוב יצירת פרויקט חדש
+// יצירת פרויקט חדש
 router.post('/projects', createProject);
 
-// ניתוב קבלת כל הפרויקטים
+// קבלת כל הפרויקטים
 router.get('/projects', getProjects);
 
-// ניתוב קבלת פרויקט לפי מזהה
+// קבלת פרויקט לפי מזהה
 router.get('/projects/:id', getProjectById);
 
-// ניתוב לעדכון פרויקט
+// עדכון פרויקט
 router.put('/projects/:id', updateProject);
 
-// ניתוב למחיקת פרויקט
+// מחיקת פרויקט
 router.delete('/projects/:id', deleteProject);
 
-// ניתוב למחיקת תמונה מפרויקט
-router.delete('/projects/:id/images/:imageId', deleteImageFromProject);
+// הוספת תמונה לפרויקט
+router.post('/projects/:id/images', addImageToProject);
 
-// ניתוב למחיקת חבר צוות מפרויקט
-router.delete('/projects/:id/team/:email', deleteTeamMember);
-
-// ניתוב לחיפוש תמונות לפי מילת מפתח
+// חיפוש תמונות
 router.get('/projects/images/:keyword', async (req, res) => {
-    const { keyword } = req.params;
-
     try {
-        const images = await searchImages(keyword);
+        const images = await searchImages(req.params.keyword);
         res.status(200).json(images);
     } catch (error) {
-        console.error('Error fetching images:', error.message);
-        res.status(500).json({ error: error.message });
+        console.error("Error fetching images from Unsplash:", error.message);
+        res.status(500).json({ error: "Failed to fetch images." });
     }
 });
+
+router.delete('/projects/:id/images/:imageId', deleteImageFromProject);
 
 module.exports = router;
