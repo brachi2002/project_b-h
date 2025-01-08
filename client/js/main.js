@@ -1,9 +1,15 @@
+/**
+ * @file main.js
+ * @description לוגיקה בצד הלקוח לניהול פרויקטים, כולל טעינה, הוספה, עדכון, ומחיקת פרויקטים ותמונות.
+ */
 $(document).ready(function () {
     const apiUrl = "/projects";
 
-            // טעינת כל הפרויקטים
-    // טעינת כל הפרויקטים
-    function loadProjects() {
+/**
+     * @function loadProjects
+     * @description טוען את כל הפרויקטים ומציג אותם ברשימה.
+     */
+        function loadProjects() {
         $.ajax({
             url: `${apiUrl}`,
             method: "GET",
@@ -35,8 +41,11 @@ $(document).ready(function () {
         });
     }
 
-    // הצגת תמונות עם אפשרות מחיקה
-    $(document).on("click", ".viewImages", function () {
+ /**
+     * @event click.viewImages
+     * @description מציג את רשימת התמונות בפרויקט כולל אפשרות למחוק תמונה.
+     */
+        $(document).on("click", ".viewImages", function () {
         const projectId = $(this).data("id");
 
         $.ajax({
@@ -69,7 +78,12 @@ $(document).ready(function () {
         });
     });
 
-    // מחיקת תמונה מתוך הרשימה
+
+/**
+     * @event click.removeImage
+     * @description מוחק תמונה מתוך פרויקט מסוים.
+     */
+
     $(document).on("click", ".removeImage", function () {
         const projectId = $(this).data("project-id");
         const imageId = $(this).data("id");
@@ -87,7 +101,11 @@ $(document).ready(function () {
         });
     });
 
-    // כפתור הוספת תמונה לפרויקט
+/**
+     * @event click.addImage
+     * @description פותח חלון לבחירת תמונות להוספה לפרויקט על בסיס מילת מפתח.
+     */
+
     $(document).on("click", ".addImage", function () {
         const projectId = $(this).data("id");
         const imageKeyword = prompt("Enter a keyword to search for images:");
@@ -129,6 +147,11 @@ $(document).ready(function () {
         });
     });
 
+ /**
+     * @event click.selectImage
+     * @description מוסיף תמונה שנבחרה לפרויקט מסוים.
+     */
+
     $(document).on("click", ".selectImage", function () {
         const projectId = $(this).data("project-id");
         const image = {
@@ -138,8 +161,6 @@ $(document).ready(function () {
             keyword: $(this).data("keyword"), // מוודאים שהשדה הזה מועבר
         };
     
-        // לוג לבדיקה
-        console.log("Image data being sent:", { projectId, ...image });
     
         if (!projectId || !image.id || !image.thumb || !image.description || !image.keyword) {
             console.error("Missing required fields:", { projectId, ...image });
@@ -164,8 +185,12 @@ $(document).ready(function () {
         });
     });
 
-// Add project button handler
-$(document).on("click", "#addProject", function () {
+/**
+     * @event click.addProject
+     * @description מציג טופס להוספת פרויקט חדש.
+     */
+
+    $(document).on("click", "#addProject", function () {
     $("#projectModalBody").html(`
         <form id="projectForm">
             <h4>Add New Project</h4>
@@ -208,7 +233,11 @@ $(document).on("click", "#addProject", function () {
     $("#projectModal").modal("show");
 });
 
-// Add Team Member button handler
+/**
+     * @event click.addTeamMember
+     * @description מוסיף שדה להזנת חבר צוות חדש בטופס.
+     */
+
 $(document).on("click", "#addTeamMember", function () {
     $("#teamMembers").append(`
         <div class="team-member mb-3">
@@ -220,7 +249,8 @@ $(document).on("click", "#addTeamMember", function () {
     `);
 });
 
-// Remove Team Member button handler
+
+
 $(document).on("click", ".removeTeamMember", function () {
     const teamContainer = $(this).closest("#teamMembers");
     const teamMembers = teamContainer.find(".team-member");
@@ -231,7 +261,11 @@ $(document).on("click", ".removeTeamMember", function () {
     }
 });
 
-        // Create new project
+/**
+     * @event submit.projectForm
+     * @description שולח את פרטי הפרויקט החדש לשרת ויוצר פרויקט.
+     */
+
 $(document).on("submit", "#projectForm", function (e) {
     e.preventDefault();
 
@@ -278,8 +312,12 @@ $(document).on("submit", "#projectForm", function (e) {
     });
 });
 
-    // View project details
-    $(document).on("click", ".viewProject", function () {
+/**
+     * @event click.viewProject
+     * @description מציג פרטי פרויקט מסוים.
+     */
+
+$(document).on("click", ".viewProject", function () {
         const projectId = $(this).data("id");
         $.ajax({
             url: `${apiUrl}/${projectId}`,
@@ -300,7 +338,11 @@ $(document).on("submit", "#projectForm", function (e) {
         });
     });
 
-    // Delete project
+    /**
+     * @event click.deleteProject
+     * @description מוחק פרויקט מסוים.
+     */
+
     $(document).on("click", ".deleteProject", function () {
         const projectId = $(this).data("id");
         if (!confirm("Are you sure you want to delete this project?")) return;
@@ -318,8 +360,10 @@ $(document).on("submit", "#projectForm", function (e) {
     });
 
    
-
-    // הצגת חברי צוות עם אפשרות להוספה בלבד
+/**
+     * @event click.viewTeam
+     * @description מציג את חברי הצוות של פרויקט מסוים.
+     */
     $(document).on("click", ".viewTeam", function () {
         const projectId = $(this).data("id");
 
@@ -354,6 +398,12 @@ $(document).on("submit", "#projectForm", function (e) {
             },
         });
     });
+
+    /**
+     * @event click.addTeamMember
+     * @description מוסיף שדה להזנת חבר צוות חדש בטופס.
+     */
+
     $(document).on("click", ".addTeamMember", function () {
         const projectId = $(this).data("project-id");
         $(`#teamMembers-${projectId}`).append(`
@@ -365,10 +415,11 @@ $(document).on("submit", "#projectForm", function (e) {
         `);
     });
     
+/**
+     * @event click.saveTeamChanges
+     * @description שומר שינויים ברשימת הצוות של פרויקט.
+     */
     
-
-
-    // שמירת שינויים בחברי צוות
     $(document).on("click", ".saveTeamChanges", function () {
         const projectId = $(this).data("project-id");
         const updatedTeam = $(`#teamMembers-${projectId} .team-member`).map(function () {
@@ -399,9 +450,12 @@ $(document).on("submit", "#projectForm", function (e) {
     });
     
 
+/**
+     * @event click.editFields
+     * @description מציג טופס לעריכת שם ותקציר של פרויקט.
+     */
 
 
-    // Edit fields (name and summary)
     $(document).on("click", ".editFields", function () {
         const projectId = $(this).data("id");
         $.ajax({
@@ -429,7 +483,11 @@ $(document).on("submit", "#projectForm", function (e) {
         });
     });
 
-    // Save changes
+/**
+     * @event submit.update-project-form
+     * @description שומר את השינויים בעריכת פרויקט.
+     */
+
     $(document).on("submit", ".update-project-form", function (e) {
         e.preventDefault();
         const projectId = $(this).data("id");
@@ -453,6 +511,12 @@ $(document).on("submit", "#projectForm", function (e) {
         });
     });
 
-    // Initialize
+    
+
+/**
+     * @function init
+     * @description אתחול טעינת הפרויקטים עם פתיחת העמוד.
+     */
+
     loadProjects();
 });

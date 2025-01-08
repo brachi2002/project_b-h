@@ -1,3 +1,8 @@
+/**
+ * @file projectController.js
+ * @description לוגיקה לניהול פרויקטים, כולל יצירה, קריאה, עדכון, מחיקה, והוספת תמונות.
+ */
+
 const fs = require('fs');
 const path = require('path');
 
@@ -5,7 +10,13 @@ const filePath = path.join(__dirname, '../projects.json');
 const validator = require('validator'); // ייבוא ספריית Validator
 
 
-// קריאת וכתיבת נתונים
+/**
+ * קריאת נתוני הפרויקטים מהקובץ.
+ * @function readData
+ * @returns {Object} אובייקט המכיל את הפרויקטים.
+ * @throws {Error} אם קריאת הקובץ נכשלה.
+ */
+
 const readData = () => {
     try {
         const data = fs.readFileSync(filePath, 'utf8');
@@ -16,6 +27,14 @@ const readData = () => {
     }
 };
 
+
+/**
+ * כתיבת נתוני הפרויקטים לקובץ.
+ * @function writeData
+ * @param {Object} data - אובייקט המכיל את הנתונים לכתיבה.
+ */
+
+
 const writeData = (data) => {
     try {
         fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
@@ -25,7 +44,12 @@ const writeData = (data) => {
 };
 
 
-// יצירת פרויקט חדש
+/**
+ * יצירת פרויקט חדש.
+ * @function createProject
+ * @param {Object} req - אובייקט הבקשה, כולל גוף הבקשה עם נתוני הפרויקט.
+ * @param {Object} res - אובייקט התגובה להחזרת תוצאה ללקוח.
+ */
 
 const createProject = (req, res) => {
     const { name, summary, manager, team, images, start_date } = req.body;
@@ -91,7 +115,13 @@ const createProject = (req, res) => {
 };
 
 
-// Get all projects
+/**
+ * קבלת כל הפרויקטים.
+ * @function getProjects
+ * @param {Object} req - אובייקט הבקשה.
+ * @param {Object} res - אובייקט התגובה להחזרת התוצאה.
+ */
+
 const getProjects = (req, res) => {
     try {
         const data = readData(); // Read all projects from the JSON file
@@ -102,7 +132,12 @@ const getProjects = (req, res) => {
     }
 };
 
-// הוספת תמונה לפרויקט קיים
+/**
+ * הוספת תמונה לפרויקט קיים.
+ * @function addImageToProject
+ * @param {Object} req - אובייקט הבקשה עם מזהה הפרויקט בפרמטרים ופרטי התמונה בגוף הבקשה.
+ * @param {Object} res - אובייקט התגובה להחזרת סטטוס ההוספה.
+ */
 const addImageToProject = (req, res) => {
     try {
         const { id } = req.params; // קבלת מזהה הפרויקט מהפרמטרים של ה-URL
@@ -145,7 +180,14 @@ const addImageToProject = (req, res) => {
     }
 };
 
-// קבלת פרויקט לפי מזהה
+
+/**
+ * קבלת פרויקט לפי מזהה.
+ * @function getProjectById
+ * @param {Object} req - אובייקט הבקשה עם מזהה הפרויקט בפרמטרים.
+ * @param {Object} res - אובייקט התגובה להחזרת הפרויקט המבוקש.
+ */
+
 const getProjectById = (req, res) => {
     const { id } = req.params;
     const data = readData();
@@ -156,6 +198,13 @@ const getProjectById = (req, res) => {
 
     res.status(200).json(data[id]);
 };
+
+/**
+ * עדכון פרויקט קיים.
+ * @function updateProject
+ * @param {Object} req - אובייקט הבקשה עם נתוני העדכון בפרמטרים ובגוף הבקשה.
+ * @param {Object} res - אובייקט התגובה להחזרת סטטוס העדכון.
+ */
 
 const updateProject = (req, res) => {
     const { id } = req.params;
@@ -186,12 +235,13 @@ const updateProject = (req, res) => {
 
     res.status(200).json({ message: "Project updated successfully", project });
 };
+/**
+ * מחיקת פרויקט לפי מזהה.
+ * @function deleteProject
+ * @param {Object} req - אובייקט הבקשה עם מזהה הפרויקט בפרמטרים.
+ * @param {Object} res - אובייקט התגובה להחזרת סטטוס המחיקה.
+ */
 
-
-
-
-
-// מחיקת פרויקט
 const deleteProject = (req, res) => {
     const { id } = req.params;
 
@@ -205,6 +255,13 @@ const deleteProject = (req, res) => {
 
     res.status(200).json({ message: "Project deleted successfully" });
 };
+
+/**
+ * מחיקת תמונה מתוך פרויקט.
+ * @function deleteImageFromProject
+ * @param {Object} req - אובייקט הבקשה עם מזהה הפרויקט והתמונה בפרמטרים.
+ * @param {Object} res - אובייקט התגובה להחזרת סטטוס המחיקה.
+ */
 
 const deleteImageFromProject = (req, res) => {
     const { id, imageId } = req.params;
