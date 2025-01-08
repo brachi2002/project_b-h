@@ -163,38 +163,74 @@ $(document).ready(function () {
             },
         });
     });
-    
-        // Add project button handler
-        $(document).on("click", "#addProject", function () {
-            $("#projectModalBody").html(`
-                <form id="projectForm">
-                    <h4>Add New Project</h4>
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Project Name:</label>
-                        <input type="text" id="name" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="summary" class="form-label">Summary:</label>
-                        <textarea id="summary" class="form-control" required></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="managerName" class="form-label">Manager Name:</label>
-                        <input type="text" id="managerName" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="managerEmail" class="form-label">Manager Email:</label>
-                        <input type="email" id="managerEmail" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="startDate" class="form-label">Start Date:</label>
-                        <input type="datetime-local" id="startDate" class="form-control" required>
-                    </div>
-                    <button type="submit" class="btn btn-success">Create Project</button>
-                </form>
-            `);
-            $("#projectModal").modal("show");
-        });
-    
+
+// Add project button handler
+$(document).on("click", "#addProject", function () {
+    $("#projectModalBody").html(`
+        <form id="projectForm">
+            <h4>Add New Project</h4>
+            <div class="mb-3">
+                <label for="name" class="form-label">Project Name:</label>
+                <input type="text" id="name" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label for="summary" class="form-label">Summary:</label>
+                <textarea id="summary" class="form-control" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="managerName" class="form-label">Manager Name:</label>
+                <input type="text" id="managerName" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label for="managerEmail" class="form-label">Manager Email:</label>
+                <input type="email" id="managerEmail" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label for="startDate" class="form-label">Start Date:</label>
+                <input type="datetime-local" id="startDate" class="form-control" required>
+            </div>
+
+            <!-- Team Members Section -->
+            <h5>Team Members</h5>
+            <div id="teamMembers">
+                <div class="team-member mb-3">
+                    <input type="text" class="form-control mb-2 team-name" placeholder="Name" required>
+                    <input type="email" class="form-control mb-2 team-email" placeholder="Email" required>
+                    <input type="text" class="form-control mb-2 team-role" placeholder="Role" required>
+                    <button type="button" class="btn btn-danger removeTeamMember">Remove</button>
+                </div>
+            </div>
+            <button type="button" id="addTeamMember" class="btn btn-secondary mb-3">Add Team Member</button>
+
+            <button type="submit" class="btn btn-success">Create Project</button>
+        </form>
+    `);
+    $("#projectModal").modal("show");
+});
+
+// Add Team Member button handler
+$(document).on("click", "#addTeamMember", function () {
+    $("#teamMembers").append(`
+        <div class="team-member mb-3">
+            <input type="text" class="form-control mb-2 team-name" placeholder="Name" required>
+            <input type="email" class="form-control mb-2 team-email" placeholder="Email" required>
+            <input type="text" class="form-control mb-2 team-role" placeholder="Role" required>
+            <button type="button" class="btn btn-danger removeTeamMember">Remove</button>
+        </div>
+    `);
+});
+
+// Remove Team Member button handler
+$(document).on("click", ".removeTeamMember", function () {
+    const teamContainer = $(this).closest("#teamMembers");
+    const teamMembers = teamContainer.find(".team-member");
+    if (teamMembers.length > 1) {
+        $(this).closest(".team-member").remove();
+    } else {
+        alert("At least one team member is required.");
+    }
+});
+
         // Create new project
 $(document).on("submit", "#projectForm", function (e) {
     e.preventDefault();
@@ -318,10 +354,9 @@ $(document).on("submit", "#projectForm", function (e) {
             },
         });
     });
-
-    // הוספת חבר צוות חדש
-    $("#addTeamMember").click(function () {
-        $("#teamMembers").append(`
+    $(document).on("click", ".addTeamMember", function () {
+        const projectId = $(this).data("project-id");
+        $(`#teamMembers-${projectId}`).append(`
             <div class="team-member mb-3">
                 <input type="text" class="form-control mb-2 team-name" placeholder="Name" required>
                 <input type="email" class="form-control mb-2 team-email" placeholder="Email" required>
@@ -329,6 +364,7 @@ $(document).on("submit", "#projectForm", function (e) {
             </div>
         `);
     });
+    
     
 
 

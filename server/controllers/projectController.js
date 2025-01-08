@@ -19,7 +19,6 @@ const readData = () => {
 const writeData = (data) => {
     try {
         fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-        console.log("Data written successfully to JSON file");
     } catch (error) {
         console.error("Error writing data to JSON file:", error.message);
     }
@@ -58,8 +57,20 @@ const createProject = (req, res) => {
 
     try {
         const data = readData(); // Read existing projects
-        const projectId = Math.random().toString(36).substring(2, 15).toUpperCase(); // Generate unique ID
 
+        const generateProjectId = () => {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let projectId = '';
+            for (let i = 0; i < 13; i++) {
+                const randomIndex = Math.floor(Math.random() * characters.length);
+                projectId += characters[randomIndex];
+            }
+            return projectId;
+        };
+        
+        
+        const projectId = generateProjectId(); // Generate the 13-character unique ID 
+   
         // Create the new project
         data[projectId] = {
             id: projectId,
@@ -96,15 +107,6 @@ const addImageToProject = (req, res) => {
     try {
         const { id } = req.params; // קבלת מזהה הפרויקט מהפרמטרים של ה-URL
         const { id: imageId, thumb, description, keyword } = req.body; // קבלת פרטי התמונה מגוף הבקשה
-
-        // הדפסת מזהה הפרויקט
-        console.log("Project ID (req.params.id):", id);
-
-        // הדפסת פרטי התמונה
-        console.log("Image ID:", imageId);
-        console.log("Image Thumbnail (thumb):", thumb);
-        console.log("Image Description:", description);
-        console.log("Image Keyword:", keyword);
 
         // בדיקות קלט
         if (!id || !imageId || !thumb || !description || !keyword) {
@@ -159,8 +161,6 @@ const updateProject = (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
-    console.log("Received update request for project:", id, updates);
-
     const data = readData();
     if (!data[id]) {
         return res.status(404).json({ error: "Project not found" });
@@ -170,12 +170,10 @@ const updateProject = (req, res) => {
 
     // Only process 'team' field if provided
     if (updates.team) {
-        console.log("Updating team:", updates.team);
         const existingTeam = project.team.map(member => JSON.stringify(member));
         const newMembers = updates.team.filter(member => !existingTeam.includes(JSON.stringify(member)));
         if (newMembers.length > 0) {
             project.team = [...project.team, ...newMembers];
-            console.log("Updated team members:", project.team);
         }
     }
 
@@ -185,7 +183,6 @@ const updateProject = (req, res) => {
     });
 
     writeData(data);
-    console.log("Updated project saved:", project);
 
     res.status(200).json({ message: "Project updated successfully", project });
 };
