@@ -156,38 +156,41 @@ const getProjectById = (req, res) => {
 };
 
 const updateProject = (req, res) => {
-    const { id } = req.params; // מזהה הפרויקט
-    const updates = req.body; // השדות לעדכון
+    const { id } = req.params;
+    const updates = req.body;
 
-    const data = readData(); // קריאת הנתונים מקובץ JSON
+    console.log("Received update request for project:", id, updates);
 
-    // בדיקה אם הפרויקט קיים
+    const data = readData();
     if (!data[id]) {
         return res.status(404).json({ error: "Project not found" });
     }
 
-    const project = data[id]; // שליפת הפרויקט הקיים
+    const project = data[id];
 
-    // שדות שלא ניתן לעדכן
-    const nonUpdatableFields = ['id', 'manager', 'team'];
+    // Only process 'team' field if provided
+    if (updates.team) {
+        console.log("Updating team:", updates.team);
+        const existingTeam = project.team.map(member => JSON.stringify(member));
+        const newMembers = updates.team.filter(member => !existingTeam.includes(JSON.stringify(member)));
+        if (newMembers.length > 0) {
+            project.team = [...project.team, ...newMembers];
+            console.log("Updated team members:", project.team);
+        }
+    }
 
-    // סינון רק לשדות שניתן לעדכן
-    const allowedUpdates = Object.keys(updates).filter(key => !nonUpdatableFields.includes(key));
-
-    // עדכון השדות המותרים
-    allowedUpdates.forEach(key => {
-        project[key] = updates[key];
+    // Update other updatable fields
+    Object.keys(updates).forEach(key => {
+        if (key !== 'team') project[key] = updates[key];
     });
 
-    // כתיבה חזרה לקובץ
     writeData(data);
+    console.log("Updated project saved:", project);
 
-    // החזרת תגובה
-    return res.status(200).json({
-        message: "Project updated successfully",
-        project: project,
-    });
+    res.status(200).json({ message: "Project updated successfully", project });
 };
+
+
 
 
 

@@ -1,23 +1,33 @@
 $(document).ready(function () {
     const apiUrl = "/projects";
 
-    // טוען את כל הפרויקטים
+            // טעינת כל הפרויקטים
+    // טעינת כל הפרויקטים
     function loadProjects() {
         $.ajax({
-            url: apiUrl,
+            url: `${apiUrl}`,
             method: "GET",
             success: function (projects) {
-                const projectHtml = Object.values(projects).map(project => `
+                const sortedProjects = Object.values(projects).sort((a, b) => new Date(b.start_date) - new Date(a.start_date));
+                const projectHtml = sortedProjects.map(project => `
                     <div class="list-group-item">
                         <h5>${project.name}</h5>
                         <p>${project.summary}</p>
-                        <p><strong>Manager:</strong> ${project.manager.name} (<a href="mailto:${project.manager.email}">${project.manager.email}</a>)</p>
+                        <p><strong>Manager:</strong> <a href="mailto:${project.manager.email}">${project.manager.name}</a></p>
                         <p><strong>Start Date:</strong> ${new Date(project.start_date).toLocaleString()}</p>
+                        <p><strong>Project ID:</strong> ${project.id}</p>
                         <button class="btn btn-primary btn-sm viewProject" data-id="${project.id}">View</button>
                         <button class="btn btn-danger btn-sm deleteProject" data-id="${project.id}">Delete</button>
+                        <button class="btn btn-info btn-sm viewImages" data-id="${project.id}">View Images</button>
+                        <button class="btn btn-warning btn-sm addImage" data-id="${project.id}">Add Image</button>
+                        <button class="btn btn-secondary btn-sm viewTeam" data-id="${project.id}">View Team</button>
+                        <button class="btn btn-success btn-sm editFields" data-id="${project.id}">Edit Fields</button>
                     </div>
                 `).join('');
-                $("#projectList").html(projectHtml);
+                const addProjectButton = `
+                    <button id="addProject" class="btn btn-success mb-3">Add Project</button>
+                `;
+                $("#projectList").html(addProjectButton + projectHtml + addProjectButton);
             },
             error: function () {
                 alert("Failed to load projects.");
@@ -25,152 +35,118 @@ $(document).ready(function () {
         });
     }
 
-    // מחיקת פרויקט
-    $(document).on("click", ".deleteProject", function () {
+    // הצגת תמונות עם אפשרות מחיקה
+    $(document).on("click", ".viewImages", function () {
         const projectId = $(this).data("id");
-
-        if (!confirm("Are you sure you want to delete this project?")) {
-            return;
-        }
-
-        $.ajax({
-            url: `${apiUrl}/${projectId}`,
-            method: "DELETE",
-            success: function () {
-                alert("Project deleted successfully!");
-                loadProjects();
-            },
-            error: function (xhr) {
-                console.error("Error deleting project:", xhr.responseText);
-                alert("Failed to delete project.");
-            },
-        });
-    });
-
-    // צפייה ועריכת פרויקט
-    $(document).on("click", ".viewProject", function () {
-        const projectId = $(this).data("id");
-        const projectCard = $(this).closest(".list-group-item");
-
-        if (projectCard.find(".project-details").length) {
-            projectCard.find(".project-details").remove();
-            return;
-        }
 
         $.ajax({
             url: `${apiUrl}/${projectId}`,
             method: "GET",
             success: function (project) {
-                const detailsHtml = `
-                    <div class="project-details">
-                        <form class="update-project-form" data-id="${projectId}">
-                            <h4>Edit Project</h4>
-                            <div class="mb-3">
-                                <label for="name-${projectId}" class="form-label">Project Name:</label>
-                                <input type="text" id="name-${projectId}" class="form-control" value="${project.name}">
-                            </div>
-                            <div class="mb-3">
-                                <label for="summary-${projectId}" class="form-label">Summary:</label>
-                                <textarea id="summary-${projectId}" class="form-control">${project.summary}</textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label for="startDate-${projectId}" class="form-label">Start Date:</label>
-                                <input type="datetime-local" id="startDate-${projectId}" class="form-control" value="${new Date(project.start_date).toISOString().slice(0, 16)}">
-                            </div>
-
-                            <h5>Team Members</h5>
-                            <div id="teamMembers-${projectId}">
-                                ${project.team.map(member => `
-                                    <div class="team-member mb-3">
-                                        <p><strong>${member.name}</strong> - ${member.role} (<a href="mailto:${member.email}">${member.email}</a>)</p>
-                                    </div>
-                                `).join('')}
-                            </div>
-                            <button type="button" class="btn btn-secondary addTeamMember" data-project-id="${projectId}">Add Team Member</button>
-
-                            <h5>Images</h5>
-                            <div id="images-${projectId}">
-                                ${project.images.map(image => `
-                                    <div class="card m-2" style="width: 18rem;">
-                                        <img src="${image.thumb}" class="card-img-top" alt="${image.description}">
-                                        <div class="card-body">
-                                            <p class="card-text">${image.description}</p>
-                                            <button class="btn btn-danger removeImage" data-id="${image.id}" data-project-id="${projectId}">Remove</button>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                            <button type="button" class="btn btn-primary addImages" data-id="${projectId}">Add Images</button>
-                            <div id="imagesModal-${projectId}" class="mt-3" style="display:none;">
-                                <input type="text" id="imageKeyword-${projectId}" class="form-control mb-3" placeholder="Search for images">
-                                <button type="button" class="btn btn-secondary searchImages" data-id="${projectId}">Search</button>
-                                <div id="imageResults-${projectId}" class="d-flex flex-wrap mt-3"></div>
-                            </div>
-
-                            <button type="submit" class="btn btn-success">Save Changes</button>
-                            <button type="button" class="btn btn-secondary closeDetails">Close</button>
-                        </form>
-                    </div>
-                `;
-                projectCard.append(detailsHtml);
-            },
-            error: function (xhr) {
-                console.error("Error loading project:", xhr.responseText);
-                alert("Failed to load project details.");
-            },
-        });
-    });
-
-    // הוספת תמונות לפרויקט
-    $(document).on("click", ".addImages", function () {
-        const projectId = $(this).data("id");
-        $(`#imagesModal-${projectId}`).toggle();
-    });
-
-    $(document).on("click", ".searchImages", function () {
-        const projectId = $(this).data("id");
-        const keyword = $(`#imageKeyword-${projectId}`).val();
-
-        if (!keyword) {
-            alert("Please enter a keyword.");
-            return;
-        }
-
-        $.ajax({
-            url: `${apiUrl}/images/${keyword}`,
-            method: "GET",
-            success: function (images) {
-                const imagesHtml = images.map(image => `
-                    <div class="card m-2" style="width: 18rem;">
+                const imagesHtml = project.images.map(image => `
+                    <div class="card m-2" style="width: 10rem;">
                         <img src="${image.thumb}" class="card-img-top" alt="${image.description}">
                         <div class="card-body">
                             <p class="card-text">${image.description || "No description"}</p>
-                            <button class="btn btn-primary selectImageForProject" 
+                            <button class="btn btn-danger btn-sm removeImage" 
                                 data-id="${image.id}" 
-                                data-thumb="${image.thumb}" 
-                                data-description="${image.description || ""}" 
                                 data-project-id="${projectId}">
-                                Select
+                                Remove
                             </button>
                         </div>
                     </div>
                 `).join('');
-                $(`#imageResults-${projectId}`).html(imagesHtml);
+
+                $("#projectModalBody").html(`
+                    <h4>Images of Project: ${project.name}</h4>
+                    <div id="imageGallery" class="d-flex flex-wrap">${imagesHtml || "<p>No images available.</p>"}</div>
+                `);
+                $("#projectModal").modal("show");
             },
             error: function () {
+                alert("Failed to load images.");
+            },
+        });
+    });
+
+    // מחיקת תמונה מתוך הרשימה
+    $(document).on("click", ".removeImage", function () {
+        const projectId = $(this).data("project-id");
+        const imageId = $(this).data("id");
+
+        $.ajax({
+            url: `${apiUrl}/${projectId}/images/${imageId}`,
+            method: "DELETE",
+            success: function () {
+                alert("Image removed successfully!");
+                $(`button[data-id="${imageId}"]`).closest(".card").remove(); // הסרת הכרטיס מהתצוגה
+            },
+            error: function () {
+                alert("Failed to remove image.");
+            },
+        });
+    });
+
+    // כפתור הוספת תמונה לפרויקט
+    $(document).on("click", ".addImage", function () {
+        const projectId = $(this).data("id");
+        const imageKeyword = prompt("Enter a keyword to search for images:");
+        if (!imageKeyword) {
+            alert("Keyword is required!");
+            return;
+        }
+
+        $.ajax({
+            url: `${apiUrl}/images/${imageKeyword}`,
+            method: "GET",
+            success: function (images) {
+                const imagesHtml = images.map(image => `
+                    <div class="card m-2" style="width: 10rem;">
+                        <img src="${image.thumb}" class="card-img-top" alt="${image.description}">
+                        <div class="card-body">
+                            <p class="card-text">${image.description || "No description"}</p>
+                            <button class="btn btn-primary selectImage" 
+                                data-id="${image.id}" 
+                                data-thumb="${image.thumb}" 
+                                data-description="${image.description || ""}" 
+                                data-project-id="${projectId}"
+                                data-keyword="${imageKeyword}">>
+                                Add This Image
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                $("#projectModalBody").html(`
+                    <h4>Select an Image to Add</h4>
+                    <div id="imageSearchResults" class="d-flex flex-wrap">${imagesHtml}</div>
+                `);
+                $("#projectModal").modal("show");
+            },
+            error: function (xhr) {
+                console.error("Failed to fetch images:", xhr.responseText);
                 alert("Failed to fetch images.");
             },
         });
     });
 
-    $(document).on("click", ".selectImageForProject", function () {
+    $(document).on("click", ".selectImage", function () {
         const projectId = $(this).data("project-id");
         const image = {
             id: $(this).data("id"),
             thumb: $(this).data("thumb"),
             description: $(this).data("description"),
+            keyword: $(this).data("keyword"), // מוודאים שהשדה הזה מועבר
         };
-
+    
+        // לוג לבדיקה
+        console.log("Image data being sent:", { projectId, ...image });
+    
+        if (!projectId || !image.id || !image.thumb || !image.description || !image.keyword) {
+            console.error("Missing required fields:", { projectId, ...image });
+            alert("All fields are required to add an image!");
+            return;
+        }
+    
         $.ajax({
             url: `${apiUrl}/${projectId}/images`,
             method: "POST",
@@ -178,6 +154,7 @@ $(document).ready(function () {
             data: JSON.stringify(image),
             success: function () {
                 alert("Image added successfully!");
+                $("#projectModal").modal("hide");
                 loadProjects();
             },
             error: function (xhr) {
@@ -186,254 +163,56 @@ $(document).ready(function () {
             },
         });
     });
-
-    // שמירת שינויים בפרויקט
-    $(document).on("submit", ".update-project-form", function (e) {
-        e.preventDefault();
-
-        const projectId = $(this).data("id");
-
-    // איסוף מידע מהטופס
-    const updatedProject = {
-        name: $(`#name-${projectId}`).val(),
-        summary: $(`#summary-${projectId}`).val(),
-        manager: {
-            name: $(`#managerName-${projectId}`).val(),
-            email: $(`#managerEmail-${projectId}`).val(),
-        },
-        start_date: $(`#startDate-${projectId}`).val(),
-        team: $(`#teamMembers-${projectId} .team-member`).map(function () {
-            return {
-                name: $(this).find(".team-name").val(),
-                email: $(this).find(".team-email").val(),
-                role: $(this).find(".team-role").val(),
-            };
-        }).get(),
-        images: $(`#images-${projectId} .card`).map(function () {
-            return {
-                id: $(this).find(".removeImage").data("id"),
-                thumb: $(this).find("img").attr("src"),
-                description: $(this).find(".card-text").text(),
-            };
-        }).get(),
-    };
-
-    // שליחת המידע המעודכן לשרת
-    $.ajax({
-        url: `${apiUrl}/projects/${projectId}`,
-        method: "PUT",
-        contentType: "application/json",
-        data: JSON.stringify(updatedProject),
-        success: function () {
-            alert("Project updated successfully!");
-            loadProjects(); // רענון רשימת הפרויקטים
-        },
-        error: function (xhr) {
-            console.error("Error updating project:", xhr.responseText);
-            alert("Failed to update project.");
-        },
-    });
-});
-
     
-    //הוספת חברי צוות לטופס פרויקט חדש
-    $("#addTeamMember").click(function () {
-        $("#teamMembers").append(`
-            <div class="team-member mb-3">
-                <input type="text" class="form-control mb-2 team-name" placeholder="Name" required>
-                <input type="email" class="form-control mb-2 team-email" placeholder="Email" required>
-                <input type="text" class="form-control mb-2 team-role" placeholder="Role" required>
-                <button type="button" class="btn btn-danger removeTeamMember">Remove</button>
-            </div>
-        `);
-    });
-
-    // הוספת חברי צוות לפרויקט קיים
-$(document).on("click", ".addTeamMember", function () {
-    const projectId = $(this).data("project-id");
-
-    // איתור אזור חברי הצוות של הפרויקט הנבחר
-    $(`#teamMembers-${projectId}`).append(`
-        <div class="team-member mb-3">
-            <input type="text" class="form-control mb-2 team-name" placeholder="Name" required>
-            <input type="email" class="form-control mb-2 team-email" placeholder="Email" required>
-            <input type="text" class="form-control mb-2 team-role" placeholder="Role" required>
-            <button type="button" class="btn btn-danger removeTeamMember">Remove</button>
-        </div>
-    `);
-});
-
-// הסרת חבר צוות
-$(document).on("click", ".removeTeamMember", function () {
-    $(this).closest(".team-member").remove();
-});
-
-    // סגירת פרטי פרויקט
-$(document).on("click", ".closeDetails", function () {
-    $(this).closest(".project-details").remove();
-});
-
-
-    //חיפוש תמונות ב-Unsplash
-    $("#searchImages").click(function () {
-        const keyword = $("#imageKeyword").val();
-
-        if (!keyword) {
-            alert("Please enter a keyword.");
-            return;
-        }
-
-        $.ajax({
-            url: `${apiUrl}/projects/images/${keyword}`,
-            method: "GET",
-            success: function (images) {
-                const imagesHtml = images.map(image => `
-                    <div class="card m-2" style="width: 18rem;">
-                        <img src="${image.thumb}" class="card-img-top" alt="${image.description}">
-                        <div class="card-body">
-                            <p class="card-text">${image.description || "No description"}</p>
-                            <button type="button" class="btn btn-primary selectImage" 
-                                data-id="${image.id}" 
-                                data-thumb="${image.thumb}" 
-                                data-description="${image.description || ""}" 
-                                data-keyword="${keyword}">
-                                Select
-                            </button>
-                        </div>
+        // Add project button handler
+        $(document).on("click", "#addProject", function () {
+            $("#projectModalBody").html(`
+                <form id="projectForm">
+                    <h4>Add New Project</h4>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Project Name:</label>
+                        <input type="text" id="name" class="form-control" required>
                     </div>
-
-                `).join('');
-                $("#imageResults").html(imagesHtml);
-            },
-            error: function () {
-                alert("Failed to fetch images.");
-            },
+                    <div class="mb-3">
+                        <label for="summary" class="form-label">Summary:</label>
+                        <textarea id="summary" class="form-control" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="managerName" class="form-label">Manager Name:</label>
+                        <input type="text" id="managerName" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="managerEmail" class="form-label">Manager Email:</label>
+                        <input type="email" id="managerEmail" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="startDate" class="form-label">Start Date:</label>
+                        <input type="datetime-local" id="startDate" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">Create Project</button>
+                </form>
+            `);
+            $("#projectModal").modal("show");
         });
-    });
+    
+        // Create new project
+$(document).on("submit", "#projectForm", function (e) {
+    e.preventDefault();
 
+    const team = $(".team-member").map(function () {
+        return {
+            name: $(this).find(".team-name").val(),
+            email: $(this).find(".team-email").val(),
+            role: $(this).find(".team-role").val(),
+        };
+    }).get();
 
-    // משתנה זמני לאחסון תמונות שנבחרו לפרויקט חדש
-let selectedImages = [];
-
-$(document).on("click", ".selectImage", function () {
-    const image = {
-        id: $(this).data("id"),
-        thumb: $(this).data("thumb"),
-        description: $(this).data("description"),
-        keyword: $(this).data("keyword"),
-    };
-
-    // בדיקה אם התמונה כבר קיימת
-    if (selectedImages.some(img => img.id === image.id)) {
-        alert("Image already selected.");
+    // Validation: Ensure at least one team member is added
+    if (team.length === 0) {
+        alert("You must add at least one team member.");
         return;
     }
 
-    // הוספת התמונה למשתנה הזמני
-    selectedImages.push(image);
-
-    // הוספת התמונה לתצוגה
-    $("#selectedImages").append(`
-        <div class="card m-2" style="width: 18rem;">
-            <img src="${image.thumb}" class="card-img-top" alt="${image.description}">
-            <div class="card-body">
-                <p class="card-text">${image.description}</p>
-                <button class="btn btn-danger removeImage" data-id="${image.id}">Remove</button>
-            </div>
-        </div>
-    `);
-
-    console.log(`Image added: ${image.description}`);
-});
-$(document).on("click", ".viewProject", function () {
-    console.log("View Project button clicked"); // בדוק אם הכפתור נלחץ
-    const projectId = $(this).data("id");
-    console.log("Project ID:", projectId); // בדוק מה ה-ID שמתקבל
-    $.ajax({
-        url: `${apiUrl}/projects/${projectId}`,
-        method: "GET",
-        success: function (project) {
-            console.log("AJAX Success:", project); // בדוק אם הנתונים מוחזרים מהשרת
-            const detailsHtml = `
-                <h4>${project.name}</h4>
-                <p>${project.summary}</p>
-                <p><strong>Manager:</strong> ${project.manager.name} (<a href="mailto:${project.manager.email}">${project.manager.email}</a>)</p>
-                <p><strong>Start Date:</strong> ${new Date(project.start_date).toLocaleString()}</p>
-                <h5>Team Members</h5>
-                <ul>
-                    ${project.team.map(member => `
-                        <li>${member.name} (${member.role}) - <a href="mailto:${member.email}">${member.email}</a></li>
-                    `).join('')}
-                </ul>
-                <h5>Images</h5>
-                <div class="d-flex flex-wrap">
-                    ${project.images.map(image => `
-                        <div class="card m-2" style="width: 18rem;">
-                            <img src="${image.thumb}" class="card-img-top" alt="${image.description}">
-                            <div class="card-body">
-                                <p>${image.description}</p>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-            $("#projectModalBody").html(detailsHtml);
-            $("#projectModal").modal("show");
-        },
-        error: function (xhr) {
-            console.error("AJAX Error:", xhr.responseText); // בדוק אם יש שגיאה
-            alert("Failed to load project details.");
-        },
-    });
-    
-});
-
- 
- 
- 
-
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
-
-
-
-// הסרת תמונה
-$(document).on("click", ".removeImage", function () {
-    const imageId = $(this).data("id");
-
-    // הסרת התמונה מהמשתנה הזמני
-    selectedImages = selectedImages.filter(image => image.id !== imageId);
-
-    // הסרת התמונה מהתצוגה
-    $(this).closest(".card").remove();
-});
-
-// יצירת פרויקט חדש
-$("#projectForm").submit(function (e) {
-    e.preventDefault();
-
-    // איסוף נתוני חברי צוות
-    const team = $(".team-member").map(function () {
-        const name = $(this).find(".team-name").val();
-        const email = $(this).find(".team-email").val();
-        const role = $(this).find(".team-role").val();
-        return { name, email, role };
-    }).get();
-
-    // יצירת אובייקט הפרויקט
     const newProject = {
         name: $("#name").val(),
         summary: $("#summary").val(),
@@ -441,26 +220,19 @@ $("#projectForm").submit(function (e) {
             name: $("#managerName").val(),
             email: $("#managerEmail").val(),
         },
-        team: team || [],
-        images: selectedImages || [], // שימוש במשתנה הזמני של התמונות שנבחרו
+        team: team,
         start_date: $("#startDate").val(),
+        images: [],
     };
 
-    // בדיקת תקינות קלט
-    if (!newProject.name || !newProject.summary || !newProject.manager.name || !newProject.manager.email || !newProject.start_date) {
-        alert("Please fill out all required fields.");
-        return;
-    }
-
-    // שליחת הבקשה לשרת
     $.ajax({
-        url: `${apiUrl}/projects`,
+        url: `${apiUrl}`,
         method: "POST",
         contentType: "application/json",
         data: JSON.stringify(newProject),
         success: function () {
             alert("Project created successfully!");
-            selectedImages = []; // איפוס המשתנה הזמני לאחר יצירת הפרויקט
+            $("#projectModal").modal("hide");
             loadProjects();
         },
         error: function (xhr) {
@@ -470,8 +242,181 @@ $("#projectForm").submit(function (e) {
     });
 });
 
+    // View project details
+    $(document).on("click", ".viewProject", function () {
+        const projectId = $(this).data("id");
+        $.ajax({
+            url: `${apiUrl}/${projectId}`,
+            method: "GET",
+            success: function (project) {
+                $("#projectModalBody").html(`
+                    <h4>Project Details</h4>
+                    <p><strong>Name:</strong> ${project.name}</p>
+                    <p><strong>Summary:</strong> ${project.summary}</p>
+                    <p><strong>Manager:</strong> ${project.manager.name} (${project.manager.email})</p>
+                    <p><strong>Start Date:</strong> ${new Date(project.start_date).toLocaleString()}</p>
+                `);
+                $("#projectModal").modal("show");
+            },
+            error: function () {
+                alert("Failed to load project details.");
+            },
+        });
+    });
 
+    // Delete project
+    $(document).on("click", ".deleteProject", function () {
+        const projectId = $(this).data("id");
+        if (!confirm("Are you sure you want to delete this project?")) return;
+        $.ajax({
+            url: `${apiUrl}/${projectId}`,
+            method: "DELETE",
+            success: function () {
+                alert("Project deleted successfully!");
+                loadProjects();
+            },
+            error: function () {
+                alert("Failed to delete project.");
+            },
+        });
+    });
 
+   
+
+    // הצגת חברי צוות עם אפשרות להוספה בלבד
+    $(document).on("click", ".viewTeam", function () {
+        const projectId = $(this).data("id");
+
+        $.ajax({
+            url: `${apiUrl}/${projectId}`,
+            method: "GET",
+            success: function (project) {
+                const teamHtml = project.team.map(member => `
+                    <div class="team-member mb-3">
+                        <input type="text" class="form-control mb-2 team-name" value="${member.name}" readonly>
+                        <input type="email" class="form-control mb-2 team-email" value="${member.email}" readonly>
+                        <input type="text" class="form-control mb-2 team-role" value="${member.role}" readonly>
+                    </div>
+                `).join('');
+
+                $("#projectModalBody").html(`
+                    <h4>Team of Project: ${project.name}</h4>
+                    <div id="teamMembers-${projectId}">
+                        ${teamHtml || "<p>No team members available.</p>"}
+                    </div>
+                    <button type="button" class="btn btn-secondary addTeamMember" data-project-id="${projectId}">
+                        Add Team Member
+                    </button>
+                    <button type="button" class="btn btn-success saveTeamChanges" data-project-id="${projectId}">
+                        Save Changes
+                    </button>
+                `);
+                $("#projectModal").modal("show");
+            },
+            error: function () {
+                alert("Failed to load team members.");
+            },
+        });
+    });
+
+    // הוספת חבר צוות חדש
+    $("#addTeamMember").click(function () {
+        $("#teamMembers").append(`
+            <div class="team-member mb-3">
+                <input type="text" class="form-control mb-2 team-name" placeholder="Name" required>
+                <input type="email" class="form-control mb-2 team-email" placeholder="Email" required>
+                <input type="text" class="form-control mb-2 team-role" placeholder="Role" required>
+            </div>
+        `);
+    });
     
+
+
+    // שמירת שינויים בחברי צוות
+    $(document).on("click", ".saveTeamChanges", function () {
+        const projectId = $(this).data("project-id");
+        const updatedTeam = $(`#teamMembers-${projectId} .team-member`).map(function () {
+            return {
+                name: $(this).find(".team-name").val(),
+                email: $(this).find(".team-email").val(),
+                role: $(this).find(".team-role").val(),
+            };
+        }).get();
+    
+        console.log("Attempting to update team for project:", projectId, updatedTeam);
+    
+        $.ajax({
+            url: `/projects/${projectId}`,
+            method: "PUT",
+            contentType: "application/json",
+            data: JSON.stringify({ team: updatedTeam }),
+            success: function (response) {
+                console.log("Server response:", response);
+                alert("Team updated successfully!");
+                $("#projectModal").modal("hide");
+            },
+            error: function (xhr) {
+                console.error("Error updating team:", xhr.responseText);
+                alert("Failed to update team.");
+            },
+        });
+    });
+    
+
+
+
+    // Edit fields (name and summary)
+    $(document).on("click", ".editFields", function () {
+        const projectId = $(this).data("id");
+        $.ajax({
+            url: `${apiUrl}/${projectId}`,
+            method: "GET",
+            success: function (project) {
+                $("#projectModalBody").html(`
+                    <form class="update-project-form" data-id="${projectId}">
+                        <div class="mb-3">
+                            <label for="name-${projectId}" class="form-label">Project Name:</label>
+                            <input type="text" id="name-${projectId}" class="form-control" value="${project.name}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="summary-${projectId}" class="form-label">Summary:</label>
+                            <textarea id="summary-${projectId}" class="form-control" required>${project.summary}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success mt-3">Save Changes</button>
+                    </form>
+                `);
+                $("#projectModal").modal("show");
+            },
+            error: function () {
+                alert("Failed to load project details.");
+            },
+        });
+    });
+
+    // Save changes
+    $(document).on("submit", ".update-project-form", function (e) {
+        e.preventDefault();
+        const projectId = $(this).data("id");
+        const updatedProject = {
+            name: $(`#name-${projectId}`).val(),
+            summary: $(`#summary-${projectId}`).val(),
+        };
+        $.ajax({
+            url: `${apiUrl}/${projectId}`,
+            method: "PUT",
+            contentType: "application/json",
+            data: JSON.stringify(updatedProject),
+            success: function () {
+                alert("Project updated successfully!");
+                $("#projectModal").modal("hide");
+                loadProjects();
+            },
+            error: function () {
+                alert("Failed to update project.");
+            },
+        });
+    });
+
+    // Initialize
     loadProjects();
 });
