@@ -17,7 +17,7 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, '../client')));
 
 // ניתוב לנתיבים של פרויקטים
-app.use('/projects', projectRoutes);
+app.use('/', projectRoutes);
 
 // ניתוב ל-HTML הראשי בנתיב /
 app.get('/', (req, res) => {

@@ -46,6 +46,11 @@ const createProject = (req, res) => {
         return res.status(400).json({ error: 'Invalid email format for manager email.' });
     }
 
+    // Validation for team members
+    if (!team || team.length === 0) {
+        return res.status(400).json({ error: 'At least one team member is required.' });
+    }
+
     // Validation for team members' emails
     if (team && team.some(member => !validator.isEmail(member.email))) {
         return res.status(400).json({ error: 'One or more team member emails are invalid.' });
@@ -150,21 +155,41 @@ const getProjectById = (req, res) => {
     res.status(200).json(data[id]);
 };
 
-// עדכון פרויקט קיים
 const updateProject = (req, res) => {
-    const { id } = req.params;
-    const updates = req.body;
+    const { id } = req.params; // מזהה הפרויקט
+    const updates = req.body; // השדות לעדכון
 
-    const data = readData();
+    const data = readData(); // קריאת הנתונים מקובץ JSON
+
+    // בדיקה אם הפרויקט קיים
     if (!data[id]) {
         return res.status(404).json({ error: "Project not found" });
     }
 
-    Object.assign(data[id], updates);
+    const project = data[id]; // שליפת הפרויקט הקיים
+
+    // שדות שלא ניתן לעדכן
+    const nonUpdatableFields = ['id', 'manager', 'team'];
+
+    // סינון רק לשדות שניתן לעדכן
+    const allowedUpdates = Object.keys(updates).filter(key => !nonUpdatableFields.includes(key));
+
+    // עדכון השדות המותרים
+    allowedUpdates.forEach(key => {
+        project[key] = updates[key];
+    });
+
+    // כתיבה חזרה לקובץ
     writeData(data);
 
-    res.status(200).json({ message: "Project updated successfully", project: data[id] });
+    // החזרת תגובה
+    return res.status(200).json({
+        message: "Project updated successfully",
+        project: project,
+    });
 };
+
+
 
 // מחיקת פרויקט
 const deleteProject = (req, res) => {
