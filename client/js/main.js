@@ -47,94 +47,14 @@ $(document).ready(function () {
             },
         });
     });
+                        
 
 
-    $(document).on("click", ".viewProject", function () {
-        const projectId = $(this).data("id");
-        const projectCard = $(this).closest(".list-group-item");
-    
-        // בדיקה אם הפרטים כבר מוצגים
-        if (projectCard.find(".project-details").length) {
-            projectCard.find(".project-details").remove();
-            return;
-        }
-    
-        // קריאת פרטי הפרויקט מהשרת
-        $.ajax({
-            url: `${apiUrl}/projects/${projectId}`,
-            method: "GET",
-            success: function (project) {
-                console.log("Project loaded:", project); // בדיקת לוג
-                const detailsHtml = `
-                    <div class="project-details">
-                        <form class="update-project-form" data-id="${projectId}">
-                            <h4>Edit Project</h4>
-                            <div class="mb-3">
-                                <label for="name-${projectId}" class="form-label">Project Name:</label>
-                                <input type="text" id="name-${projectId}" class="form-control" value="${project.name}">
-                            </div>
-                            <div class="mb-3">
-                                <label for="summary-${projectId}" class="form-label">Summary:</label>
-                                <textarea id="summary-${projectId}" class="form-control">${project.summary}</textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label for="managerName-${projectId}" class="form-label">Manager Name:</label>
-                                <input type="text" id="managerName-${projectId}" class="form-control" value="${project.manager.name}">
-                            </div>
-                            <div class="mb-3">
-                                <label for="managerEmail-${projectId}" class="form-label">Manager Email:</label>
-                                <input type="email" id="managerEmail-${projectId}" class="form-control" value="${project.manager.email}">
-                            </div>
-                            <div class="mb-3">
-                                <label for="startDate-${projectId}" class="form-label">Start Date:</label>
-                                <input type="datetime-local" id="startDate-${projectId}" class="form-control" value="${new Date(project.start_date).toISOString().slice(0, 16)}">
-                            </div>
-    
-                            <h5>Team Members</h5>
-                            <div id="teamMembers-${projectId}">
-                                ${project.team.map(member => `
-                                    <div class="team-member mb-3">
-                                        <input type="text" class="form-control mb-2 team-name" value="${member.name}" required>
-                                        <input type="email" class="form-control mb-2 team-email" value="${member.email}" required>
-                                        <input type="text" class="form-control mb-2 team-role" value="${member.role}" required>
-                                        <button class="btn btn-danger removeTeamMember" data-email="${member.email}" data-project-id="${projectId}">Remove</button>
-                                    </div>
-                                `).join('')}
-                            </div>
-                            <button type="button" class="btn btn-secondary addTeamMember" data-project-id="${projectId}">Add Team Member</button>
-    
-                            <h5>Images</h5>
-                            <div id="images-${projectId}">
-                                ${project.images.map(image => `
-                                    <div class="card m-2" style="width: 18rem;">
-                                        <img src="${image.thumb}" class="card-img-top" alt="${image.description}">
-                                        <div class="card-body">
-                                            <p class="card-text">${image.description}</p>
-                                            <button class="btn btn-danger removeImage" data-id="${image.id}" data-project-id="${projectId}">Remove</button>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                            <button type="button" class="btn btn-primary addImages" data-id="${projectId}">Add Images</button>
-                            <div id="imagesModal-${projectId}" class="mt-3" style="display:none;">
-                                <input type="text" id="imageKeyword-${projectId}" class="form-control mb-3" placeholder="Search for images">
-                                <button type="button" class="btn btn-secondary searchImages" data-id="${projectId}">Search</button>
-                                <div id="imageResults-${projectId}" class="d-flex flex-wrap mt-3"></div>
-                            </div>
-    
-                            <button type="submit" class="btn btn-success">Save Changes</button>
-                            <button type="button" class="btn btn-secondary closeDetails">Close</button>
-                        </form>
-                    </div>
-                `;
-                projectCard.append(detailsHtml);
-            },
-            error: function (xhr, status, error) {
-                console.error("Error loading project:", error); // בדיקת לוג לשגיאות
-                alert("Failed to load project details.");
-            },
-        });
-    });
+
+
+
+
+
 
     $(document).on("click", ".addImages", function () {
         const projectId = $(this).data("id");
@@ -384,7 +304,68 @@ $(document).on("click", ".selectImage", function () {
 
     console.log(`Image added: ${image.description}`);
 });
+$(document).on("click", ".viewProject", function () {
+    console.log("View Project button clicked"); // בדוק אם הכפתור נלחץ
+    const projectId = $(this).data("id");
+    console.log("Project ID:", projectId); // בדוק מה ה-ID שמתקבל
+    $.ajax({
+        url: `${apiUrl}/projects/${projectId}`,
+        method: "GET",
+        success: function (project) {
+            console.log("AJAX Success:", project); // בדוק אם הנתונים מוחזרים מהשרת
+            const detailsHtml = `
+                <h4>${project.name}</h4>
+                <p>${project.summary}</p>
+                <p><strong>Manager:</strong> ${project.manager.name} (<a href="mailto:${project.manager.email}">${project.manager.email}</a>)</p>
+                <p><strong>Start Date:</strong> ${new Date(project.start_date).toLocaleString()}</p>
+                <h5>Team Members</h5>
+                <ul>
+                    ${project.team.map(member => `
+                        <li>${member.name} (${member.role}) - <a href="mailto:${member.email}">${member.email}</a></li>
+                    `).join('')}
+                </ul>
+                <h5>Images</h5>
+                <div class="d-flex flex-wrap">
+                    ${project.images.map(image => `
+                        <div class="card m-2" style="width: 18rem;">
+                            <img src="${image.thumb}" class="card-img-top" alt="${image.description}">
+                            <div class="card-body">
+                                <p>${image.description}</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            $("#projectModalBody").html(detailsHtml);
+            $("#projectModal").modal("show");
+        },
+        error: function (xhr) {
+            console.error("AJAX Error:", xhr.responseText); // בדוק אם יש שגיאה
+            alert("Failed to load project details.");
+        },
+    });
+    
+});
 
+ 
+ 
+ 
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
 
 
 
